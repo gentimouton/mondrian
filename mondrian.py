@@ -1,79 +1,110 @@
-""" truchet tiling a la mondrian 
+""" truchet tiling a la mandrian 
 http://www.algorithmic-worlds.net/blog/blog.php?Post=20110201
 Using pure pygame drawing, but could also use surfarray and numpy. 
 """
-import pygame as pg
+import datetime
 import random 
+import time
+
+import pygame as pg
 
 
-# TODO: mondrian: screen, area of screen to fill -> rects created
-# so that: 
-# rects = mondrian(screen,(0,0,res[0],res[1]))
-# for r in rects
-#     mondrian(screen,r) 
-
-# TODO: use functional programming? Screen pixels is just an array of arrays
-
-random.seed(0)
+SEED = 'mondrian_seed'
+RESOLUTION = 400, 300
+TILE_SIZE = 25
+TILE_THICKNESS = 2
 
 WHITE = 255, 255, 255
 BLACK = 0, 0, 0
+GRAY = 222, 222, 222
+BLUE = 0, 0, 222
+RED = 222, 0, 0
+YELLOW = 222, 222, 0
+   
 def random_color():
     return random.randint(22, 222), random.randint(22, 188), random.randint(22, 222)
 
 
-# make i+j random floats in [0.1, 0.9]
-junc = []
 def make_junctures(i, j):
-    for _ in range(2 * i + 1):
-        col = [random.random() * 0.8 + 0.1 for _ in range(j + 1)]
-        junc.append(col)
-        
+    junc = [[random.random() * 0.9 + 0.05 for _ in range(j + 1)] for _ in range(2 * i + 1)]
+    return junc
     
-def make_tile(size, i, j, thickness=20):
-    """ make a square tile. size in px. return surface. """
+    
+def make_tile(size, i, j, junc, thickness=4):
+    """ make a square tile. size in px. return surface and central rect. """
+    if thickness % 2 == 1:  # we're going to divide this by 2 throughout
+        thickness += 1
     surf = pg.Surface((size, size))
-    surf.fill(random_color())
-#     surf.fill(WHITE)
-#     pg.draw.line(surf, (222, 222, 222), (0, 0), (size, 0)) # debug lines
-#     pg.draw.line(surf, (222, 222, 222), (0, 0), (0, size))
+    surf.fill(WHITE)
+#     pg.draw.line(surf, GRAY, (0, 0), (size, 0))  # debug lines
+#     pg.draw.line(surf, GRAY, (0, 0), (0, size))
     # draw lines with given junctions
-    y1 = junc[2 * i][j]  # y of the segment coming from the left side   
-    x2 = junc[2 * i + 1][j]  # x of the segment coming from the top side
-    y3 = junc[2 * i + 2][j]  # y from right side
-    x4 = junc[2 * i + 1][j + 1]  # x from bottom side
-    start = 0, y1 * size  # segment from left side to mid
-    end = max(x2, x4) * size, y1 * size
-    pg.draw.line(surf, BLACK, start, end, size // thickness)
-    start = x2 * size, 0  # segment from top side to mid
-    end = x2 * size, max(y1, y3) * size
-    pg.draw.line(surf, BLACK, start, end, size // thickness)
-    start = size, y3 * size  # segment from right side to mid
-    end = min(x2, x4) * size, y3 * size  
-    pg.draw.line(surf, BLACK, start, end, size // thickness)
-    start = x4 * size, size  # segment from bottom side to mid
-    end = x4 * size, min(y1, y3) * size
-    pg.draw.line(surf, BLACK, start, end, size // thickness)
+    y1 = round(junc[2 * i][j] * size)  # y of the segment coming from the left side   
+    x2 = round(junc[2 * i + 1][j] * size)  # x of the segment coming from the top side
+    y3 = round(junc[2 * i + 2][j] * size)  # y from right side
+    x4 = round(junc[2 * i + 1][j + 1] * size)  # x from bottom side
+    # segment from left side to mid
+    x, y = 0, y1 - thickness // 2  
+    w, h = max(x2, x4) + thickness // 2, thickness
+    pg.draw.rect(surf, BLACK, (x, y, w, h))
+    # segment from top side to mid
+    x, y = x2 - thickness // 2, 0  # segment from top side to mid
+    w, h = thickness, max(y1, y3) + thickness // 2
+    pg.draw.rect(surf, BLACK, (x, y, w, h))
+    # segment from right side to mid
+    x, y = min(x2, x4) - thickness // 2, y3 - thickness // 2
+    w, h = size - min(x2, x4) + thickness // 2, thickness
+    pg.draw.rect(surf, BLACK, (x, y, w, h))
+    # segment from bottom side to mid
+    x, y = x4 - thickness // 2, min(y1, y3) - thickness // 2   
+    w, h = thickness, size - min(y1, y3) + thickness // 2 
+    pg.draw.rect(surf, BLACK, (x, y, w, h))
     
+    rect = (min(x2, x4) + thickness // 2,
+            min(y1, y3) + thickness // 2,
+            abs(x2 - x4) - thickness,
+            abs(y1 - y3) - thickness 
+            )
+    
+    surf.fill(random.choice([RED, BLUE, YELLOW, WHITE]), rect)
     return surf
-    
 
-def main():
-    res = 800, 600
-    pg.init()
-    screen = pg.display.set_mode(res)
-    clock = pg.time.Clock()
-    tile_size = 100
-    make_junctures(res[0] // tile_size, res[1] // tile_size)
-    for i in range(res[0] // tile_size):
-        for j in range(res[1] // tile_size):
-            tile = make_tile(tile_size, i, j)
-            screen.blit(tile, (i * tile_size, j * tile_size))
+
+def make_mondrian(surf, seed):
+    random.seed(seed)
+    res = surf.get_size()
+    junc = make_junctures(res[0] // TILE_SIZE, res[1] // TILE_SIZE)
+    for i in range(res[0] // TILE_SIZE):
+        for j in range(res[1] // TILE_SIZE):
+            tile = make_tile(TILE_SIZE, i, j, junc, TILE_THICKNESS)
+            surf.blit(tile, (i * TILE_SIZE, j * TILE_SIZE))
     pg.display.flip()
     
-    while 1:
-        if pg.event.peek([pg.QUIT, pg.KEYDOWN]): break
-        clock.tick(30)
+
+def screenshot():
+    # https://github.com/gentimouton/olympus/blob/master/src/pview.py
+    fname_template = 'mondrian_screenshot_%Y%m%d%H%M%S.png'
+    fname = datetime.datetime.now().strftime(fname_template)
+    pg.image.save(pg.display.get_surface(), fname)
+    
+    
+def main():
+    pg.init()
+    screen = pg.display.set_mode(RESOLUTION)
+    make_mondrian(screen, SEED)
+    
+    done = False
+    while not done:
+        event = pg.event.wait()
+        if event.type == pg.QUIT:
+            done = True
+        elif event.type == pg.KEYDOWN:
+            if event.key == pg.K_ESCAPE:
+                done = True
+            elif event.key == pg.K_PRINT:
+                screenshot()
+            else:
+                make_mondrian(screen, time.time())
 
 
 if __name__ == '__main__': 
