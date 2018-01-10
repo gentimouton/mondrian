@@ -1,6 +1,11 @@
 # mondrian
-mondrian tiling of the screen using pygame
+Mimic Mondrian paintings via Truchet tiling of the screen (cf [approach](http://www.algorithmic-worlds.net/blog/blog.php?Post=20110201)). 
+Uses Pygame.
 
-could also Mandelbrot Fractals of Mondrian, like http://www.algorithmic-worlds.net/blog/blog.php?Post=20110201
+![screenshot](mondrian_screenshot_20180109214813.png)
 
-Could also add Mandalas to it.
+Future work:
+- instead of filling with solid color, fill with a smaller Mondrian pattern.
+- [tile-piling](http://www.algorithmic-worlds.net/blog/blog.php?Post=20110201)
+- Mandelbrot Fractals of Mondrian?
+- Mandalas?
