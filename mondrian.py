@@ -38,6 +38,7 @@ def make_tile(size, i, j, junc, thickness=4):
     surf.fill(WHITE)
 #     pg.draw.line(surf, GRAY, (0, 0), (size, 0))  # debug lines
 #     pg.draw.line(surf, GRAY, (0, 0), (0, size))
+
     # draw lines with given junctions
     y1 = round(junc[2 * i][j] * size)  # y of the segment coming from the left side   
     x2 = round(junc[2 * i + 1][j] * size)  # x of the segment coming from the top side
@@ -60,13 +61,14 @@ def make_tile(size, i, j, junc, thickness=4):
     w, h = thickness, size - min(y1, y3) + thickness // 2 
     pg.draw.rect(surf, BLACK, (x, y, w, h))
     
+    # fill inner rect
     rect = (min(x2, x4) + thickness // 2,
             min(y1, y3) + thickness // 2,
             abs(x2 - x4) - thickness,
             abs(y1 - y3) - thickness 
             )
-    
     surf.fill(random.choice([RED, BLUE, YELLOW, WHITE]), rect)
+    
     return surf
 
 
